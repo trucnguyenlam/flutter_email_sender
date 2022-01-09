@@ -1,16 +1,16 @@
 package com.sidlatau.flutteremailsender
 
 import android.app.Activity
-import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.embedding.engine.plugins.activity.ActivityAware
-import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
-
 import android.content.ClipData
 import android.content.ClipDescription
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import androidx.core.content.FileProvider
 import androidx.core.text.HtmlCompat
+import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -25,6 +25,7 @@ private const val RECIPIENTS = "recipients"
 private const val CC = "cc"
 private const val BCC = "bcc"
 private const val ATTACHMENT_PATHS = "attachment_paths"
+private const val CONTENT_URI_PATHS = "content_uri_paths"
 private const val IS_HTML = "is_html"
 private const val REQUEST_CODE_SEND = 607
 
@@ -93,6 +94,7 @@ class FlutterEmailSenderPlugin
         val body = options.argument<String>(BODY)
         val isHtml = options.argument<Boolean>(IS_HTML) ?: false
         val attachmentPaths = options.argument<ArrayList<String>>(ATTACHMENT_PATHS) ?: ArrayList()
+        val contentUriPaths = options.argument<ArrayList<String>>(CONTENT_URI_PATHS) ?: ArrayList()
         val subject = options.argument<String>(SUBJECT)
         val recipients = options.argument<ArrayList<String>>(RECIPIENTS)
         val cc = options.argument<ArrayList<String>>(CC)
@@ -108,14 +110,19 @@ class FlutterEmailSenderPlugin
                 text = body
             }
         }
-        val attachmentUris = attachmentPaths.map {
-            FileProvider.getUriForFile(activity!!, activity!!.packageName + ".file_provider", File(it))
+        // Special branch for Android sdk 30+
+        val attachmentUris = if (Build.VERSION.SDK_INT >= 30) {
+            contentUriPaths.map { Uri.parse(it) }
+        } else {
+            attachmentPaths.map {
+                FileProvider.getUriForFile(activity!!, activity!!.packageName + ".file_provider", File(it))
+            }
         }
 
         val intent = Intent()
 
         // We need a different intent action depending on the number of attachments.
-        if (attachmentUris.size == 0) {
+        if (attachmentUris.isEmpty()) {
             intent.action = Intent.ACTION_SENDTO
             intent.data = Uri.parse("mailto:")
         } else {
@@ -138,7 +145,7 @@ class FlutterEmailSenderPlugin
             // "This allows you to use FLAG_GRANT_READ_URI_PERMISSION when sharing content: URIs [...] If you don't set
             // a ClipData, it will be copied there for you when calling Context#startActivity(Intent)."
             // However, this doesn't always seem to be happening, so we have to do the dirty work ourselves.
-            val clipItems = attachmentUris.map({ ClipData.Item(it) })
+            val clipItems = attachmentUris.map { ClipData.Item(it) }
             val clipDescription = ClipDescription("", arrayOf("application/octet-stream"))
             val clipData = ClipData(clipDescription, clipItems.first())
             for (item in clipItems.drop(1)) {

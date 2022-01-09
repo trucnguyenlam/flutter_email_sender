@@ -3,8 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 
 class FlutterEmailSender {
-  static const MethodChannel _channel =
-      const MethodChannel('flutter_email_sender');
+  static const MethodChannel _channel = const MethodChannel('flutter_email_sender');
 
   static Future<void> send(Email mail) {
     return _channel.invokeMethod('send', mail.toJson());
@@ -19,6 +18,8 @@ class Email {
   final String body;
   final List<String>? attachmentPaths;
   final bool isHTML;
+  final List<String>? contentUriPaths;
+
   Email({
     this.subject = '',
     this.recipients = const [],
@@ -27,6 +28,7 @@ class Email {
     this.body = '',
     this.attachmentPaths,
     this.isHTML = false,
+    this.contentUriPaths,
   });
 
   Map<String, dynamic> toJson() {
@@ -37,7 +39,8 @@ class Email {
       'cc': cc,
       'bcc': bcc,
       'attachment_paths': attachmentPaths,
-      'is_html': isHTML
+      'is_html': isHTML,
+      'content_uri_paths': contentUriPaths,
     };
   }
 }
