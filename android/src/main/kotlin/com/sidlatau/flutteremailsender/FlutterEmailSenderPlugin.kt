@@ -26,6 +26,7 @@ private const val CC = "cc"
 private const val BCC = "bcc"
 private const val ATTACHMENT_PATHS = "attachment_paths"
 private const val CONTENT_URI_PATHS = "content_uri_paths"
+private const val USB_MASS_STORAGE = "usb_mass_storage"
 private const val IS_HTML = "is_html"
 private const val REQUEST_CODE_SEND = 607
 
@@ -95,6 +96,7 @@ class FlutterEmailSenderPlugin
         val isHtml = options.argument<Boolean>(IS_HTML) ?: false
         val attachmentPaths = options.argument<ArrayList<String>>(ATTACHMENT_PATHS) ?: ArrayList()
         val contentUriPaths = options.argument<ArrayList<String>>(CONTENT_URI_PATHS) ?: ArrayList()
+        val usbMassStorage = options.argument<Boolean>(USB_MASS_STORAGE) ?: false
         val subject = options.argument<String>(SUBJECT)
         val recipients = options.argument<ArrayList<String>>(RECIPIENTS)
         val cc = options.argument<ArrayList<String>>(CC)
@@ -111,7 +113,7 @@ class FlutterEmailSenderPlugin
             }
         }
         // Special branch for Android sdk 30+
-        val attachmentUris = if (Build.VERSION.SDK_INT >= 30) {
+        val attachmentUris = if (Build.VERSION.SDK_INT >= 30 || usbMassStorage) {
             contentUriPaths.map { Uri.parse(it) }
         } else {
             attachmentPaths.map {

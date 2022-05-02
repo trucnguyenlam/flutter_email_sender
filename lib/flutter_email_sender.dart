@@ -19,6 +19,7 @@ class Email {
   final List<String>? attachmentPaths;
   final bool isHTML;
   final List<String>? contentUriPaths;
+  final bool usbMassStorage;
 
   Email({
     this.subject = '',
@@ -29,6 +30,7 @@ class Email {
     this.attachmentPaths,
     this.isHTML = false,
     this.contentUriPaths,
+    this.usbMassStorage = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -41,6 +43,7 @@ class Email {
       'attachment_paths': attachmentPaths,
       'is_html': isHTML,
       'content_uri_paths': contentUriPaths,
+      'usb_mass_storage': usbMassStorage,
     };
   }
 }
