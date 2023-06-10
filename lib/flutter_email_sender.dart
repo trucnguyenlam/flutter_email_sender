@@ -18,7 +18,7 @@ class Email {
   final String body;
   final List<String>? attachmentPaths;
   final bool isHTML;
-  final List<String>? contentUriPaths;
+  final List<String?>? contentUriPaths;
   final bool usbMassStorage;
 
   Email({
