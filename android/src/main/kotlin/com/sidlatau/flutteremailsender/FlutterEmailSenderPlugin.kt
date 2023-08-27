@@ -1,8 +1,6 @@
 package com.sidlatau.flutteremailsender
 
 import android.app.Activity
-import android.content.ClipData
-import android.content.ClipDescription
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -120,34 +118,9 @@ class FlutterEmailSenderPlugin
             intent.data = Uri.parse("mailto:")
         } else {
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-            if (attachmentUris.size == 1) {
-                //https://github.com/sidlatau/flutter_email_sender/issues/91
-                // ACTION_SENDTO here does not work on some devices
-                intent.action = Intent.ACTION_SEND
-                intent.data = Uri.parse("mailto:")
-                intent.putExtra(Intent.EXTRA_STREAM, attachmentUris.first())
-                // Add a selector intent to make sure that only email apps are shown, instead of just any app that can
-                // handle the attached file(s). This is done because the intent data is ignored for ACTION_SEND and
-                // ACTION_SEND_MULTIPLE. See: https://stackoverflow.com/a/42856166/14637
-                intent.selector = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
-
-                // From the ACTION_SEND_MULTIPLE docs:
-                // "This allows you to use FLAG_GRANT_READ_URI_PERMISSION when sharing content: URIs [...] If you don't set
-                // a ClipData, it will be copied there for you when calling Context#startActivity(Intent)."
-                // However, this doesn't always seem to be happening, so we have to do the dirty work ourselves.
-                val clipItems = attachmentUris.map { ClipData.Item(it) }
-                val clipDescription = ClipDescription("", arrayOf("application/octet-stream"))
-                val clipData = ClipData(clipDescription, clipItems.first())
-                for (item in clipItems.drop(1)) {
-                    clipData.addItem(item)
-                }
-                intent.clipData = clipData
-            } else {
-                intent.action = Intent.ACTION_SEND_MULTIPLE
-                intent.type = "text/plain";
-                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(attachmentUris))
-            }
+            intent.action = Intent.ACTION_SEND_MULTIPLE
+            intent.type = "text/plain"
+            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(attachmentUris))
         }
 
         if (text != null) {
@@ -176,8 +149,9 @@ class FlutterEmailSenderPlugin
 
         val packageManager = activity?.packageManager
 
-        if (packageManager?.resolveActivity(intent, 0) != null) {
-            activity?.startActivityForResult(intent, REQUEST_CODE_SEND)
+        val chooserIntent = Intent.createChooser(intent, "Select Email app")
+        if (packageManager?.resolveActivity(chooserIntent, 0) != null) {
+            activity?.startActivityForResult(chooserIntent, REQUEST_CODE_SEND)
         } else {
             callback.error("not_available", "No email clients found!", null)
         }
