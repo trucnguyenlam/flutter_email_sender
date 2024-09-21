@@ -30,14 +30,12 @@ private const val REQUEST_CODE_SEND = 607
 class FlutterEmailSenderPlugin
     : FlutterPlugin, ActivityAware, MethodCallHandler, PluginRegistry.ActivityResultListener {
     companion object {
-
-        private const val methodChannelName = "flutter_email_sender"
-
-        var activity: Activity? = null
+        private const val METHOD_CHANNEL_NAME = "flutter_email_sender"
     }
+    private var activity: Activity? = null
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        val channel = MethodChannel(binding.binaryMessenger, methodChannelName)
+        val channel = MethodChannel(binding.binaryMessenger, METHOD_CHANNEL_NAME)
         channel.setMethodCallHandler(this)
     }
 
@@ -110,21 +108,25 @@ class FlutterEmailSenderPlugin
             }
         }
 
-        val intent = Intent()
-
         // We need a different intent action depending on the number of attachments.
-        if (attachmentUris.isEmpty()) {
-            intent.action = Intent.ACTION_SENDTO
-            intent.data = Uri.parse("mailto:")
+        val intent = if (attachmentUris.isEmpty()) {
+            val localIntent = Intent(Intent.ACTION_SENDTO)
+            localIntent.data = Uri.parse("mailto:")
+            localIntent
         } else {
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            intent.action = Intent.ACTION_SEND_MULTIPLE
-            intent.type = "text/plain"
-            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(attachmentUris))
+            val localIntent = Intent(Intent.ACTION_SEND_MULTIPLE)
+            localIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            localIntent.type = "text/plain"
+            localIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(attachmentUris))
+            localIntent
         }
 
         if (text != null) {
             intent.putExtra(Intent.EXTRA_TEXT, text)
+
+            val textList = java.util.ArrayList<CharSequence>()
+            textList.add(text)
+            intent.putCharSequenceArrayListExtra(Intent.EXTRA_TEXT, textList)
         }
 
         if (html != null) {
