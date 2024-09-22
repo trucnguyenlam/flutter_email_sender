@@ -123,10 +123,6 @@ class FlutterEmailSenderPlugin
 
         if (text != null) {
             intent.putExtra(Intent.EXTRA_TEXT, text)
-
-            val textList = java.util.ArrayList<CharSequence>()
-            textList.add(text)
-            intent.putCharSequenceArrayListExtra(Intent.EXTRA_TEXT, textList)
         }
 
         if (html != null) {
