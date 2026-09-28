@@ -23,7 +23,18 @@ public class SwiftFlutterEmailSenderPlugin: NSObject, FlutterPlugin {
     private func sendMail(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         guard let email = parseArgs(call, result: result) else { return }
 
-        guard let viewController = UIApplication.shared.keyWindow?.rootViewController else {
+        var window = UIApplication.shared.keyWindow
+        if window == nil {
+            window = UIApplication.shared.windows.first { $0.isKeyWindow }
+        }
+        if window == nil {
+            window = UIApplication.shared.windows.first
+        }
+        var topController = window?.rootViewController
+        while let presented = topController?.presentedViewController {
+            topController = presented
+        }
+        guard let viewController = topController else {
             result(FlutterError.init(code: "error",
                                      message: "Unable to get view controller!",
                                      details: nil)
