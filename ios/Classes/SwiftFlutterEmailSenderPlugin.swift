@@ -27,8 +27,8 @@ public class SwiftFlutterEmailSenderPlugin: NSObject, FlutterPlugin {
         if window == nil {
             window = UIApplication.shared.windows.first { $0.isKeyWindow }
         }
-        if window == nil {
-            window = UIApplication.shared.windows.first
+        if window == nil || window?.rootViewController == nil {
+            window = UIApplication.shared.windows.first { $0.rootViewController != nil }
         }
         var topController = window?.rootViewController
         while let presented = topController?.presentedViewController {
